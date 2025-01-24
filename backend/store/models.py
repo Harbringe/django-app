@@ -131,3 +131,88 @@ class CartOrderItem(models.Model):
 
     def __str__(self):
         return f"{self.course.title} (x{self.quantity})"
+
+
+class CourseCategory(models.Model):
+    title = models.CharField(max_length=100)
+    image = models.FileField(upload_to='course_category', null=True, blank=True, default='course_category.jpg')
+    active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True)
+
+    class Meta:
+        verbose_name_plural = 'Course Categories'
+        ordering = ['title']
+
+    def __str__(self):
+        return str(self.title)
+
+
+class Course(models.Model):
+    STATUS = (
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+        ('in_review', 'In Review'),
+    )
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.ForeignKey(CourseCategory, on_delete=models.CASCADE)
+    instructor = models.ForeignKey(User, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    slug = models.SlugField(unique=True)
+    status = models.CharField(max_length=20, choices=STATUS, default='draft')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['title']
+
+    def __str__(self):
+        return str(self.title)
+
+class CourseFaq(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    question = models.CharField(max_length=255)
+    answer = models.TextField(null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=False)
+    email = models.EmailField(null=True, blank=True)
+
+    def __str__(self):
+        return self.question
+    
+    class Meta:
+        verbose_name_plural = 'Course FAQs'
+
+
+
+class Review(models.Model):
+
+    RATING = (
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    )
+
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    review = models.TextField()
+    rating = models.PositiveIntegerField(choices=RATING, default=None)
+    reply = models.TextField(null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.product.title
+    
+    class Meta:
+        verbose_name_plural = 'Reviews & Ratings'
+
+    
+    def profile(self):
+        return Profile.objects.get(user=self.user)
+    
