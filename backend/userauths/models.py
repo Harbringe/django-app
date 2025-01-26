@@ -61,6 +61,44 @@ class User(AbstractUser):
         super(User, self).save(*args, **kwargs)
 
 
+def user_directory_path(instance, filename):
+    """
+    Generate a file path for uploaded files based on the associated user.
+
+    This function determines the directory path for a file upload based on
+    the user-related attributes present in the provided instance. It checks
+    for attributes in the following order: 'user', 'vendor.user', and 
+    'product.vendor.user'. If a user is found, the file path includes the 
+    user's ID. If no user is found, a default 'file' identifier is used.
+
+    Args:
+        instance: The model instance containing potential user-related attributes.
+        filename: The original name of the file being uploaded.
+
+    Returns:
+        str: The generated file path for the uploaded file, incorporating the
+        user ID if available, or a default identifier otherwise.
+    """
+
+    user = None
+    
+    if hasattr(instance, 'user') and instance.user:
+        user = instance.user
+    elif hasattr(instance, 'vendor') and hasattr(instance.vendor, 'user') and instance.vendor.user:
+        user = instance.vendor.user
+    elif hasattr(instance, 'product') and hasattr(instance.product.vendor, 'user') and instance.product.vendor.user:
+        user = instance.product.vendor.user
+
+    if user:
+        ext = filename.split('.')[-1]
+        filename = "%s.%s" % (user.id, ext)
+        return 'user_{0}/{1}'.format(user.id, filename)
+    else:
+        ext = filename.split('.')[-1]
+        filename = "%s.%s" % ('file', ext)
+        return 'user_{0}/{1}'.format('file', filename)
+    
+
 
 class Profile(models.Model):
     """
